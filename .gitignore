@@ -1,0 +1,4 @@
+obj/
+Makefile
+irr.make
+libirr.so
