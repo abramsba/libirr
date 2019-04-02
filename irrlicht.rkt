@@ -4,7 +4,6 @@
   ffi/unsafe)
 
 (define libirr (ffi-lib "libirr"))
-(define _callback (_fun _int -> _void))
 
 ; Structures
 
@@ -22,6 +21,11 @@
                        [y _float]
                        [z _float]))
 
+(define-cstruct _Rect ([x1 _int]
+                       [y1 _int]
+                       [x2 _int]
+                       [y2 _int]))
+
 ; Device
 
 (define _IrrlichtDevice (_cpointer 'IrrlichtDevice))
@@ -36,6 +40,16 @@
 (define setWindowCaption
   (get-ffi-obj "setWindowCaption" libirr
                (_fun _IrrlichtDevice _string -> _void)))
+
+(define _keyboardEvent (_fun _int _int _int _int -> _void))
+(define setKeyboardCallback
+  (get-ffi-obj "setKeyboardCallback" libirr
+               (_fun _IrrlichtDevice _keyboardEvent -> _void)))
+
+(define _mouseEvent (_fun _int _int _float _int _int _int _int _int -> _void))
+(define setMouseCallback
+  (get-ffi-obj "setMouseCallback" libirr
+               (_fun _IrrlichtDevice _mouseEvent -> _void)))
 
 ; Video Driver 
 
@@ -182,21 +196,36 @@
 (define setMaterialTexture
   (get-ffi-obj "setMaterialTexture" libirr
                (_fun _ISceneNode _int _ITexture -> _void)))
-#|
-(define doCallback
-  (get-ffi-obj "doCallback" libirr
-               (_fun _callback _int -> _void)))
-(define fnc 
-  (lambda (n) 
-    (displayln (format "value: ~a" n))))
-(doCallback fnc 1)
-|#
+
+; GUI
+
+(define _IGUIEnvironment (_cpointer 'IGUIEnvironment))
+(define _IGUIFont (_cpointer 'IGUIFont))
+
+(define getGUIEnvironment
+  (get-ffi-obj "getGUIEnvironment" libirr
+               (_fun _IrrlichtDevice -> _IGUIEnvironment)))
+
+(define getDefaultFont
+  (get-ffi-obj "getDefaultFont" libirr
+               (_fun _IGUIEnvironment -> _IGUIFont)))
+
+(define getFont
+  (get-ffi-obj "getFont" libirr
+               (_fun _IGUIEnvironment _string -> _IGUIFont)))
+
+(define drawText
+  (get-ffi-obj "drawText" libirr
+               (_fun _IGUIFont _string _Rect _Color -> _void)))
+
+; Testing Module 
 
 (define (test)
   (let* ([resolution (make-Vec2 640.0 480.0)]
          [device (newDevice resolution)]
          [video (getVideoDriver device)]
          [scene (getSceneManager device)]
+         [gui (getGUIEnvironment device)]
          [black (make-Color 255 0 100 0)]
          [camera (addCamera scene)]
          [cube1 (addCube scene)]
@@ -212,6 +241,12 @@
     (setPosition camera (make-Vec3 30.0 30.0 30.0))
     (setTarget camera (make-Vec3 0.0 0.0 0.0))
     (setWindowCaption device "Hello World. FPS: -1")
+    (setKeyboardCallback device 
+      (lambda (key down shift ctrl) 
+        (displayln (format "Keyboard: ~a ~a ~a ~a" key down shift ctrl))))
+    (setMouseCallback device
+      (lambda (x y wheel shift ctrl left right middle)
+        (displayln (format "Mouse: ~a ~a ~a ~a ~a ~a ~a ~a" x y wheel shift ctrl left right middle))))
     (define (loop)
       (cond [(eq? 1 (deviceRun device))
              (let () 
@@ -219,6 +254,7 @@
                (drawScene scene)
                (endScene video)
                (setWindowCaption device (format "Hello World. FPS: ~a" (getFPS video)))
+               (drawText (getDefaultFont gui) "Testing writing text" (make-Rect 25 25 200 200) (make-Color 255 255 255 255))
                (sleep 0.0165)
                (loop))]))
     (loop)))
@@ -234,6 +270,8 @@
   newDevice
   deviceRun
   setWindowCaption
+  setKeyboardCallback
+  setMouseCallback
   ; Video
   getVideoDriver
   beginScene
@@ -256,7 +294,12 @@
   setRotation
   setScale
   setMaterialFlag
-  setMaterialTexture)
+  setMaterialTexture
+  ; GUI
+  getGUIEnvironment
+  getDefaultFont
+  getFont
+  drawText)
 
 
 

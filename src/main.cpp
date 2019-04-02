@@ -4,6 +4,59 @@ using namespace irr;
 using namespace core;
 using namespace video;
 using namespace scene;
+using namespace gui;
+
+extern "C" {
+  // 1. Key Code
+  // 2. Pressed Down
+  // 3. Shift held
+  // 4. Control held
+  typedef void (*KeyboardEvent)(int,int,int,int);
+  // 1. X
+  // 2. Y
+  // 3. Wheel
+  // 4. Shift
+  // 5. Control
+  // 6. Left
+  // 7. Right
+  // 8. Middle
+  typedef void (*MouseEvent)(int,int,float,int,int,int,int,int);
+}
+
+class EventHandler : public IEventReceiver {
+  public:
+
+    bool OnEvent(const SEvent & event) {
+      if (event.EventType == EET_KEY_INPUT_EVENT && _keyboardEvent) {
+        _keyboardEvent(event.KeyInput.Key, event.KeyInput.PressedDown, event.KeyInput.Shift, event.KeyInput.Control);
+      } 
+      else if (event.EventType == EET_MOUSE_INPUT_EVENT && _mouseEvent) {
+        _mouseEvent(
+            event.MouseInput.X, 
+            event.MouseInput.Y, 
+            event.MouseInput.Wheel, 
+            event.MouseInput.Shift, 
+            event.MouseInput.Control, 
+            event.MouseInput.isLeftPressed(),
+            event.MouseInput.isRightPressed(),
+            event.MouseInput.isMiddlePressed());
+      }
+      return false;
+    }
+
+    void setKeyboardEvent(KeyboardEvent ev) {
+      _keyboardEvent = ev;
+    }
+
+    void setMouseEvent(MouseEvent ev) {
+      _mouseEvent = ev;
+    }
+
+  private:
+    KeyboardEvent _keyboardEvent;
+    MouseEvent _mouseEvent;
+    bool _keyDown[KEY_KEY_CODES_COUNT];
+};
 
 extern "C" {
 
@@ -27,6 +80,13 @@ extern "C" {
 		float z;
 	} Vec3;
 
+  typedef struct Rect {
+    int x1;
+    int y1;
+    int x2;
+    int y2;
+  } Rect;
+
 	void doCallback(callback func, int num) {
 		func(num);
 	}
@@ -34,7 +94,9 @@ extern "C" {
 	// Device Related
 
 	IrrlichtDevice * newDevice(Vec2 size) {
-		return createDevice(EDT_OPENGL, dimension2d<u32>((int)size.x, (int)size.y));
+    IrrlichtDevice * device = createDevice(EDT_OPENGL, dimension2d<u32>((int)size.x, (int)size.y));
+    device->setEventReceiver(new EventHandler());
+    return device;
 	}
 
 	int deviceRun(IrrlichtDevice * device) {
@@ -48,6 +110,14 @@ extern "C" {
 		device->setWindowCaption(wTitle.c_str());
 	}
 
+  void setKeyboardCallback(IrrlichtDevice * device, KeyboardEvent ev) {
+    ((EventHandler*)device->getEventReceiver())->setKeyboardEvent(ev);
+  }
+
+  void setMouseCallback(IrrlichtDevice * device, MouseEvent ev) {
+    ((EventHandler*)device->getEventReceiver())->setMouseEvent(ev);
+  }
+
 	// Video Driver
 
 	IVideoDriver * getVideoDriver(IrrlichtDevice * device) {
@@ -55,7 +125,7 @@ extern "C" {
 	}
 
 	void beginScene(IVideoDriver * driver, int backBuffer, int zBuffer, Color color) {
-		driver->beginScene(backBuffer, zBuffer, SColor(color.a, color.r, color.b, color.g));
+		driver->beginScene(backBuffer, zBuffer, SColor(color.a, color.r, color.g, color.b));
 	}
 
 	void endScene(IVideoDriver * driver) {
@@ -145,6 +215,27 @@ extern "C" {
 	void setMaterialTexture(ISceneNode * node, int layer, ITexture * texture) {
 		node->setMaterialTexture(layer, texture);
 	}
+
+  // GUI
+
+  IGUIEnvironment * getGUIEnvironment(IrrlichtDevice * device) {
+    return device->getGUIEnvironment();
+  }
+
+  IGUIFont * getDefaultFont(IGUIEnvironment * gui) {
+    return gui->getBuiltInFont();
+  }
+
+  IGUIFont * getFont(IGUIEnvironment * gui, char * filepath) {
+    return gui->getFont(filepath);
+  }
+
+  void drawText(IGUIFont * font, char * text, Rect rct, Color color) {
+    std::string textString(text);
+    std::wstring wText(textString.length(), L' ');
+    std::copy(textString.begin(), textString.end(), wText.begin());
+    font->draw(wText.c_str(), rect<s32>(rct.x1, rct.y1, rct.x2, rct.y2), SColor(color.a, color.r, color.g, color.b));
+  }
 
 }
 
