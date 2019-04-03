@@ -216,6 +216,30 @@ extern "C" {
     node->setMaterialTexture(layer, texture);
   }
 
+  ITriangleSelector * createOctreeSelector(ISceneManager * scene, IMesh * mesh, ISceneNode * node, int polysPerNode) {
+    return scene->createOctreeTriangleSelector(mesh, node, polysPerNode);
+  }
+
+  IMetaTriangleSelector * createMetaSelector(ISceneManager * scene) {
+    return scene->createMetaTriangleSelector();
+  }
+
+  ISceneNodeAnimator * createStraightAnimator(ISceneManager * scene, Vec3 start, Vec3 end, int ms, int loop, int pingpong) {
+    return scene->createFlyStraightAnimator(vector3d<f32>(start.x, start.y, start.z), vector3d<f32>(end.x, end.y, end.z), ms, loop, pingpong);
+  }
+
+  ISceneNodeAnimator * createCircleAnimator(ISceneManager * scene, Vec3 center, float radius, float speed, Vec3 dir, float start, float radiusEllipsoid) {
+    return scene->createFlyCircleAnimator(vector3d<f32>(center.x, center.y, center.z), radius, speed, vector3d<f32>(dir.x, dir.y, dir.z), start, radiusEllipsoid);
+  }
+
+  void addAnimator(ISceneNode * node, ISceneNodeAnimator * animator) {
+    node->addAnimator(animator);
+  }
+
+  void dropAnimator(ISceneNodeAnimator * animator) {
+    animator->drop();
+  }
+
   // GUI
 
   IGUIEnvironment * getGUIEnvironment(IrrlichtDevice * device) {

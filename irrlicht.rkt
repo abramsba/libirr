@@ -131,7 +131,10 @@
 
 (define _ISceneManager (_cpointer 'ISceneManager))
 (define _ISceneNode (_cpointer 'ISceneNode))
+(define _IMesh (_cpointer 'IMesh))
 (define _IAnimatedMesh (_cpointer 'IAnimatedMesh))
+(define _ITriangleSelector (_cpointer 'ITriangleSelector))
+(define _ISceneNodeAnimator (_cpointer 'ISceneNodeAnimator))
 
 (define getSceneManager
   (get-ffi-obj "getSceneManager" libirr
@@ -197,6 +200,30 @@
   (get-ffi-obj "setMaterialTexture" libirr
                (_fun _ISceneNode _int _ITexture -> _void)))
 
+(define createOctreeSelector
+  (get-ffi-obj "createOctreeSelector" libirr
+               (_fun _ISceneManager _IMesh _ISceneNode -> _ITriangleSelector)))
+
+(define createMetaSelector
+  (get-ffi-obj "createMetaSelector" libirr
+               (_fun _ISceneManager -> _ITriangleSelector)))
+
+(define createStraightAnimator
+  (get-ffi-obj "createStraightAnimator" libirr
+               (_fun _ISceneManager _Vec3 _Vec3 _int _int _int -> _ISceneNodeAnimator)))
+
+(define createCircleAnimator
+  (get-ffi-obj "createCircleAnimator" libirr
+               (_fun _Vec3 _float _float _Vec3 _float _float -> _ISceneNodeAnimator)))
+
+(define addAnimator
+  (get-ffi-obj "addAnimator" libirr
+               (_fun _ISceneNode _ISceneNodeAnimator -> _void)))
+
+(define dropAnimator
+  (get-ffi-obj "dropAnimator" libirr
+               (_fun _ISceneNodeAnimator -> _void)))
+
 ; GUI
 
 (define _IGUIEnvironment (_cpointer 'IGUIEnvironment))
@@ -228,9 +255,11 @@
          [gui (getGUIEnvironment device)]
          [black (make-Color 255 0 100 0)]
          [camera (addCamera scene)]
+         [animator (createStraightAnimator scene (make-Vec3 0.0 0.0 0.0) (make-Vec3 0.0 20.0 0.0) 1000 1 1)]
          [cube1 (addCube scene)]
          [cube2 (addCube scene)]
          [cube3 (addCube scene)])
+    (addAnimator cube1 animator)
     (setMaterialFlag cube1 'Wireframe 1)
     (setMaterialFlag cube2 'Lighting 0)
     (setPosition cube2 (make-Vec3 25.0 0.0 0.0))
@@ -252,9 +281,9 @@
              (let () 
                (beginScene video 1 1 black)
                (drawScene scene)
+               (drawText (getDefaultFont gui) "Testing writing text" (make-Rect 25 25 200 200) (make-Color 255 255 255 255))
                (endScene video)
                (setWindowCaption device (format "Hello World. FPS: ~a" (getFPS video)))
-               (drawText (getDefaultFont gui) "Testing writing text" (make-Rect 25 25 200 200) (make-Color 255 255 255 255))
                (sleep 0.0165)
                (loop))]))
     (loop)))
@@ -295,6 +324,11 @@
   setScale
   setMaterialFlag
   setMaterialTexture
+  createOctreeSelector
+  createMetaSelector
+  createStraightAnimator
+  createCircleAnimator
+  dropAnimator
   ; GUI
   getGUIEnvironment
   getDefaultFont
