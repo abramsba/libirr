@@ -21,11 +21,8 @@
                        [y _float]
                        [z _float]))
 
-(define-cstruct _Rect ([x1 _int]
-                       [y1 _int]
-                       [x2 _int]
-                       [y2 _int]))
-
+(define-cstruct _Rect ([p1 _Vec2]
+                       [p2 _Vec2]))
 ; Device
 
 (define _IrrlichtDevice (_cpointer 'IrrlichtDevice))
@@ -146,7 +143,11 @@
 
 (define getMesh
   (get-ffi-obj "getMesh" libirr
-               (_fun _ISceneManager _string -> _IAnimatedMesh)))
+               (_fun _ISceneManager _string -> _IMesh)))
+
+(define getAnimatedMesh
+  (get-ffi-obj "getAnimatedMesh" libirr
+               (_fun _ISceneManager _string -> _IMesh)))
 
 (define addAnimatedMesh
   (get-ffi-obj "addAnimatedMesh" libirr
@@ -281,7 +282,7 @@
              (let () 
                (beginScene video 1 1 black)
                (drawScene scene)
-               (drawText (getDefaultFont gui) "Testing writing text" (make-Rect 25 25 200 200) (make-Color 255 255 255 255))
+               (drawText (getDefaultFont gui) "Testing writing text" (make-Rect (make-Vec2 25.0 25.0) (make-Vec2 200.0 200.0)) (make-Color 255 255 255 255))
                (endScene video)
                (setWindowCaption device (format "Hello World. FPS: ~a" (getFPS video)))
                (sleep 0.0165)
