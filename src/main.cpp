@@ -92,10 +92,8 @@ class EventHandler : public IEventReceiver {
 
 extern "C" {
 
-  EXPORT(IrrlichtDevice * newDevice(Vec2 size)) {
-    IrrlichtDevice * device = createDevice(EDT_OPENGL, dimension2d<u32>((int)size.x, (int)size.y));
-    device->setEventReceiver(new EventHandler());
-    return device;
+  EXPORT(IrrlichtDevice * newDevice(E_DRIVER_TYPE driverType, Vec2 size, int bits, int fullscreen, int stencilBuffer, int vsync)) {
+    return createDevice(driverType, dimension2d<u32>((int)size.x, (int)size.y), bits, fullscreen, stencilBuffer, vsync, new EventHandler());
   }
 
   EXPORT(int deviceRun(IrrlichtDevice * device)) {
