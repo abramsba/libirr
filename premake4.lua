@@ -4,6 +4,10 @@ solution "libirr"
 		links { "Irrlicht", "GL", "Xxf86vm", "Xext", "X11", "Xcursor" }
 		includedirs { "/usr/include/irrlicht" }
 		libdirs { "/usr/lib" }
+	configuration { "macosx" }
+		includedirs { "/usr/local/include/irrlicht" }
+		links { "Irrlicht", "/Library/Frameworks/OpenGL.framework", "/Library/Frameworks/AppKit.framework", "/Library/Frameworks/IOKit.framework" }
+		libdirs { "/usr/local/lib" }
 	configuration "Debug"
 		flags { "Symbols" }
 	configuration "Release"
