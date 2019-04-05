@@ -10,10 +10,10 @@ solution "libirr"
 		libdirs { "/usr/local/lib" }
 	configuration { "windows" }
 		if os.getenv("IRR_INCLUDE_DIR") == nil then
-			error("Error: Environment variable IRR_INCLUDE_DIR has not been set")
+			print("Warning (Windows builds): Environment variable IRR_INCLUDE_DIR has not been set")
 		end
 		if os.getenv("IRR_LIBRARY_DIR") == nil then
-			error("Error: Environment variable IRR_LIBRARY_DIR has not been set")
+			print("Warning (Windows builds): Environment variable IRR_LIBRARY_DIR has not been set")
 		end
 		defines { "WINDOWS" }
 		includedirs { os.getenv("IRR_INCLUDE_DIR") }
