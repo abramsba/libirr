@@ -55,6 +55,10 @@ extern "C" {
 
 }
 
+vector3d<f32> v3(Vec3 v) {
+  return vector3d<f32>(v.x, v.y, v.z);
+}
+
 class EventHandler : public IEventReceiver {
   public:
 
@@ -193,8 +197,8 @@ extern "C" {
     return scene->addSkyBoxSceneNode(top, bottom, left, right, front, back);
   }
 
-  EXPORT(ICameraSceneNode * addCamera(ISceneManager * scene)) {
-    return scene->addCameraSceneNode();
+  EXPORT(ICameraSceneNode * addCamera(ISceneManager * scene, Vec3 position, Vec3 target, int active)) {
+    return scene->addCameraSceneNode(NULL, v3(position), v3(target), -1, active);
   }
 
   EXPORT(void setTarget(ICameraSceneNode * camera, Vec3 target)) {
@@ -243,6 +247,26 @@ extern "C" {
 
   EXPORT(void dropAnimator(ISceneNodeAnimator * animator)) {
     animator->drop();
+  }
+
+  EXPORT(ICameraSceneNode * getActiveCamera(ISceneManager * manager)) {
+    return manager->getActiveCamera();
+  }
+
+  EXPORT(void setActiveCamera(ISceneManager * manager, ICameraSceneNode * camera)) {
+    manager->setActiveCamera(camera);
+  }
+
+  EXPORT(void setParent(ISceneNode * node, ISceneNode * child)) {
+    child->setParent(node);
+  }
+
+  EXPORT(void addChild(ISceneNode * node, ISceneNode * child)) {
+    node->addChild(child);
+  }
+
+  EXPORT(ISceneNode * getParent(ISceneNode * node)) {
+    return node->getParent();
   }
 
   // GUI
