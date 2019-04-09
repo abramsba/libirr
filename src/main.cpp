@@ -1,4 +1,4 @@
-#include <iostream>
+#include <string>
 #include <irrlicht.h>
 using namespace irr;
 using namespace core;
@@ -57,6 +57,10 @@ extern "C" {
 
 vector3d<f32> v3(Vec3 v) {
   return vector3d<f32>(v.x, v.y, v.z);
+}
+
+vector2d<f32> v2(Vec2 v) {
+  return vector2d<f32>(v.x, v.y);
 }
 
 class EventHandler : public IEventReceiver {
@@ -167,20 +171,27 @@ extern "C" {
     return scene->addMeshSceneNode(mesh);
   }
 
-  EXPORT(IBillboardSceneNode * addBillboard(ISceneManager * scene)) {
-    return scene->addBillboardSceneNode();
+  EXPORT(IBillboardSceneNode * addBillboard(ISceneManager * scene, Vec2 size, Vec3 position)) {
+    return scene->addBillboardSceneNode(NULL, v2(size), v3(position));
+  }
+
+  EXPORT(IBillboardSceneNode * addBillboardText(ISceneManager * scene, IGUIFont * font, char * text, Vec2 size, Vec3 position)) {
+    std::string textString(text);
+    std::wstring wText(textString.length(), L' ');
+    std::copy(textString.begin(), textString.end(), wText.begin());
+    return scene->addBillboardTextSceneNode(font, wText.c_str(), NULL, v2(size), v3(position));
   }
 
   EXPORT(ISceneNode * addNull(ISceneManager * scene)) {
     return scene->addEmptySceneNode();
   }
 
-  EXPORT(ILightSceneNode * addLight(ISceneManager * scene)) {
-    return scene->addLightSceneNode();
+  EXPORT(ILightSceneNode * addLight(ISceneManager * scene, Vec3 position, Color color, float radius)) {
+    return scene->addLightSceneNode(NULL, v3(position), SColorf(color.r / 255.0, color.g / 255.0, color.b / 255.0));
   }
 
-  EXPORT(ISceneNode * addCube(ISceneManager * scene)) {
-    return scene->addCubeSceneNode();
+  EXPORT(ISceneNode * addCube(ISceneManager * scene, float size, Vec3 position, Vec3 rotation, Vec3 scale)) {
+    return scene->addCubeSceneNode(size, NULL, -1, v3(position), v3(rotation), v3(scale));
   }
 
   EXPORT(IMeshSceneNode * addOctree(ISceneManager * scene, IAnimatedMesh * mesh)) {
@@ -267,6 +278,14 @@ extern "C" {
 
   EXPORT(ISceneNode * getParent(ISceneNode * node)) {
     return node->getParent();
+  }
+
+  EXPORT(int getID(ISceneNode* node)) {
+    return node->getID();
+  }
+
+  EXPORT(void setID(ISceneNode * node, int id)) {
+    node->setID(id);
   }
 
   // GUI
