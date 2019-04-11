@@ -1,4 +1,9 @@
+
+#include <btBulletDynamicsCommon.h>
+#include <btBulletCollisionCommon.h>
+
 #include <string>
+#include <vector>
 #include <irrlicht.h>
 using namespace irr;
 using namespace core;
@@ -57,6 +62,14 @@ extern "C" {
 
 vector3d<f32> v3(Vec3 v) {
   return vector3d<f32>(v.x, v.y, v.z);
+}
+
+btVector3 bv3(Vec3 v) {
+  return btVector3(v.x, v.y, v.z);
+}
+
+btVector3 irrbv3(vector3d<f32> v) {
+  return btVector3(v.X, v.Y, v.Z);
 }
 
 vector2d<f32> v2(Vec2 v) {
@@ -121,6 +134,22 @@ extern "C" {
 
   EXPORT(void setMouseCallback(IrrlichtDevice * device, MouseEvent ev)) {
     ((EventHandler*)device->getEventReceiver())->setMouseEvent(ev);
+  }
+
+  EXPORT(ITimer * getTimer(IrrlichtDevice * device)) {
+    return device->getTimer();
+  }
+
+  EXPORT(unsigned int getTime(ITimer * timer)) {
+    return timer->getTime();
+  }
+
+  EXPORT(void startTimer(ITimer * timer)) {
+      timer->start();
+  }
+
+  EXPORT(void stopTimer(ITimer * timer)) {
+    timer->stop();
   }
 
   // Video Driver
@@ -309,6 +338,152 @@ extern "C" {
     font->draw(wText.c_str(), rect<s32>(rct.p1.x, rct.p1.y, rct.p2.x, rct.p2.y), SColor(color.a, color.r, color.g, color.b));
   }
 
+  // Bullet physics
+  
+  EXPORT(btDefaultCollisionConfiguration * newCollisionConfiguration()) {
+    return new btDefaultCollisionConfiguration();
+  }
+
+  EXPORT(btBroadphaseInterface * newAxisSweep(Vec3 min, Vec3 max)) {
+    return new btAxisSweep3(bv3(min), bv3(max));
+  }
+
+  EXPORT(btCollisionDispatcher * newCollisionDispatcher(btDefaultCollisionConfiguration * config)) {
+    return new btCollisionDispatcher(config);
+  }
+
+  EXPORT(btSequentialImpulseConstraintSolver * newSequentialConstraintSolver()) {
+    return new btSequentialImpulseConstraintSolver();
+  }
+
+  EXPORT(btDiscreteDynamicsWorld * newDynamicsWorld(
+          btCollisionDispatcher * dispatcher,
+          btBroadphaseInterface * broadphase,
+          btSequentialImpulseConstraintSolver * solver,
+          btDefaultCollisionConfiguration * config)) {
+    return new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, config);
+
+  }
+
+  EXPORT(void stepSimulation(btDiscreteDynamicsWorld * world, unsigned int delta)) {
+    world->stepSimulation(delta);
+  }
+
+  EXPORT(void addRigidBody(btDiscreteDynamicsWorld * world, btRigidBody * body)) {
+    world->addRigidBody(body);
+  }
+
+  EXPORT(btRigidBody * cubeToRigidBody(ISceneNode * node, float mass=0.0f)) {
+    btTransform transform;
+    transform.setIdentity();
+    transform.setOrigin(irrbv3(node->getPosition()));
+    btDefaultMotionState * state = new btDefaultMotionState(transform);
+    btVector3 half(node->getScale().X*0.5f, node->getScale().Y*0.5f, node->getScale().Z*0.5f);
+    btCollisionShape * shape = new btBoxShape(half);
+    btRigidBody * body;
+    btVector3 inertia;
+    shape->calculateLocalInertia(mass, inertia);
+    body = new btRigidBody(mass, state, shape, inertia);
+    body->setUserPointer((void*)node);
+    return body;
+  }
+
+  EXPORT(void updateRigidBody(btRigidBody * object)) {
+    ISceneNode * node = static_cast<ISceneNode*>(object->getUserPointer());
+    btVector3 point = object->getCenterOfMassPosition();
+    node->setPosition(vector3d<f32>((f32)point[0], (f32)point[1], (f32)point[2]));
+
+    vector3d<f32> euler;
+    const btQuaternion& quat = object->getOrientation();
+    quaternion q(quat.getX(), quat.getY(), quat.getZ(), quat.getW());
+    q.toEuler(euler);
+    euler *= RADTODEG;
+    node->setRotation(euler);
+  }
+
+  EXPORT(btRigidBody * meshToRigidBody(IMeshSceneNode * node)) {
+    auto bv = [&](const vector3d<f32> & v) -> btVector3 {
+      return btVector3(v.X, v.Y, v.Z);
+    };
+
+    btRigidBody * body = NULL;
+    if ( node->getType() == ESNT_ANIMATED_MESH || node->getType() == ESNT_MESH ) {
+      vector3d<f32> nodeScale = node->getScale();
+      IMesh * mesh = ((IMeshSceneNode*)node)->getMesh();
+      size_t buffercount = mesh->getMeshBufferCount();
+      btVector3 position = bv(node->getPosition());
+      
+      std::vector<S3DVertex> vVertices;
+      std::vector<int> vIndices;
+
+      for( size_t i = 0; i < buffercount; ++i ) {
+        IMeshBuffer * buffer = mesh->getMeshBuffer(i);
+        E_VERTEX_TYPE vertexType = buffer->getVertexType();
+        E_INDEX_TYPE indexType = buffer->getIndexType();
+        size_t numVerts = buffer->getVertexCount();
+        size_t numInd = buffer->getIndexCount();
+        vVertices.resize(vVertices.size() + numVerts);
+        vIndices.resize(vIndices.size() + numInd);
+
+        void * vertices = buffer->getVertices();
+        void * indices = buffer->getIndices();
+
+        S3DVertex * standard = reinterpret_cast<S3DVertex*>(vertices);
+        S3DVertex2TCoords * two2coords = reinterpret_cast<S3DVertex2TCoords*>(vertices);
+        S3DVertexTangents * tangents = reinterpret_cast<S3DVertexTangents*>(vertices);
+        
+        int16_t * ind16 = reinterpret_cast<int16_t*>(indices);
+        int32_t * ind32 = reinterpret_cast<int32_t*>(indices);
+
+        for(size_t v = 0; v < numVerts; ++v) {
+          auto & vert = vVertices[v];
+          switch(vertexType) {
+            case EVT_STANDARD:
+              vert = standard[v];
+              break;
+          }
+        }
+
+        for(size_t n = 0; n < numInd; ++n) {
+          auto & index = vIndices[n];
+          switch(indexType) {
+            case EIT_16BIT:
+              index = ind16[n];
+              break;
+            case EIT_32BIT:
+              index = ind32[n];
+              break;
+          }
+        }
+
+      }
+
+      if (!vVertices.empty() && !vIndices.empty()) {
+        const size_t numIndices = vIndices.size();
+        const size_t numTriangles = numIndices / 3;
+        btTriangleMesh * btmesh = new btTriangleMesh();
+        for (size_t i = 0; i < numIndices; i += 3) {
+          const btVector3 &A = bv(vVertices[vIndices[i]].Pos);
+          const btVector3 &B = bv(vVertices[vIndices[i]].Pos);
+          const btVector3 &C = bv(vVertices[vIndices[i]].Pos);
+          btmesh->addTriangle(A, B, C, true);
+        }
+
+        btTransform transform;
+        transform.setIdentity();
+        transform.setOrigin(position);
+        btDefaultMotionState * motionState = new btDefaultMotionState(transform);
+
+        btCollisionShape * btShape = new btBvhTriangleMeshShape(btmesh, true);
+        btShape->setMargin(0.05f);
+
+        btScalar mass = 0.0f;
+        body = new btRigidBody(mass, motionState, btShape);
+        body->setUserPointer((void*)node);
+      }
+    }
+    return body;
+  }
 }
 
 

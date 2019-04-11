@@ -1,8 +1,8 @@
 solution "libirr"
 	configurations { "Debug", "Release" }
 	configuration { "linux" }
-		links { "Irrlicht", "GL", "Xxf86vm", "Xext", "X11", "Xcursor" }
-		includedirs { "/usr/include/irrlicht" }
+		links { "Irrlicht", "GL", "Xxf86vm", "Xext", "X11", "Xcursor", "BulletCollision", "BulletDynamics" }
+		includedirs { "/usr/include/irrlicht", "/usr/include/bullet" }
 		libdirs { "/usr/lib" }
 	configuration { "macosx" }
 		includedirs { "/usr/local/include/irrlicht" }
