@@ -5,8 +5,8 @@ solution "libirr"
 		includedirs { "/usr/include/irrlicht", "/usr/include/bullet" }
 		libdirs { "/usr/lib" }
 	configuration { "macosx" }
-		includedirs { "/usr/local/include/irrlicht" }
-		links { "Irrlicht", "/Library/Frameworks/OpenGL.framework", "/Library/Frameworks/AppKit.framework", "/Library/Frameworks/IOKit.framework" }
+		includedirs { "/usr/local/include/irrlicht", "/usr/local/include/bullet" }
+		links { "Irrlicht", "BulletCollision", "BulletDynamics", "LinearMath", "/Library/Frameworks/OpenGL.framework", "/Library/Frameworks/AppKit.framework", "/Library/Frameworks/IOKit.framework" }
 		libdirs { "/usr/local/lib" }
 	configuration { "windows" }
 		if os.getenv("IRR_INCLUDE_DIR") == nil then

@@ -4,6 +4,7 @@
 
 #include <string>
 #include <vector>
+#include <iostream>
 #include <irrlicht.h>
 using namespace irr;
 using namespace core;
@@ -171,6 +172,7 @@ extern "C" {
   }
   
   EXPORT(ITexture * getTexture(IVideoDriver * driver, char * filepath)) {
+	std::cout << "Path: " << filepath << std::endl;
     return driver->getTexture(filepath);
   }
 
@@ -402,16 +404,12 @@ extern "C" {
   }
 
   EXPORT(btRigidBody * meshToRigidBody(IMeshSceneNode * node)) {
-    auto bv = [&](const vector3d<f32> & v) -> btVector3 {
-      return btVector3(v.X, v.Y, v.Z);
-    };
-
     btRigidBody * body = NULL;
     if ( node->getType() == ESNT_ANIMATED_MESH || node->getType() == ESNT_MESH ) {
       vector3d<f32> nodeScale = node->getScale();
       IMesh * mesh = ((IMeshSceneNode*)node)->getMesh();
       size_t buffercount = mesh->getMeshBufferCount();
-      btVector3 position = bv(node->getPosition());
+      btVector3 position = irrbv3(node->getPosition());
       
       std::vector<S3DVertex> vVertices;
       std::vector<int> vIndices;
@@ -463,9 +461,9 @@ extern "C" {
         const size_t numTriangles = numIndices / 3;
         btTriangleMesh * btmesh = new btTriangleMesh();
         for (size_t i = 0; i < numIndices; i += 3) {
-          const btVector3 &A = bv(vVertices[vIndices[i]].Pos);
-          const btVector3 &B = bv(vVertices[vIndices[i]].Pos);
-          const btVector3 &C = bv(vVertices[vIndices[i]].Pos);
+          const btVector3 &A = irrbv3(vVertices[vIndices[i]].Pos);
+          const btVector3 &B = irrbv3(vVertices[vIndices[i]].Pos);
+          const btVector3 &C = irrbv3(vVertices[vIndices[i]].Pos);
           btmesh->addTriangle(A, B, C, true);
         }
 

@@ -7,7 +7,7 @@ C Wrapper for Irrlicht with use in Racket
 ### Arch Linux
 
 ```
-pacman -S premake4 irrlicht
+pacman -S premake4 irrlicht bullet
 premake4 gmake
 make
 ```
@@ -15,7 +15,7 @@ make
 ### OSX
 
 ```
-brew install premake4 irrlicht
+brew install premake4 irrlicht bullet
 premake4 gmake
 make
 ```
