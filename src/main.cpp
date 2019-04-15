@@ -505,6 +505,10 @@ extern "C" {
     delete body;
   }
 
+  EXPORT(void setLinearVelocity(btRigidBody * body, Vec3 velocity)) {
+    body->setLinearVelocity(bv3(velocity));
+  }
+
 }
 
 
