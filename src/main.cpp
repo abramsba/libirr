@@ -319,6 +319,10 @@ extern "C" {
     node->setID(id);
   }
 
+  EXPORT(void removeNode(ISceneNode * node)) {
+    node->remove();
+  }
+
   // GUI
 
   EXPORT(IGUIEnvironment * getGUIEnvironment(IrrlichtDevice * device)) {
@@ -364,10 +368,22 @@ extern "C" {
           btSequentialImpulseConstraintSolver * solver,
           btDefaultCollisionConfiguration * config)) {
     return new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, config);
-
   }
 
-  EXPORT(void stepSimulation(btDiscreteDynamicsWorld * world, unsigned int delta)) {
+  EXPORT(void deleteWorld(
+          btCollisionDispatcher * dispatcher,
+          btBroadphaseInterface * broadphase,
+          btSequentialImpulseConstraintSolver * solver,
+          btDefaultCollisionConfiguration * config,
+          btDiscreteDynamicsWorld * world)) {
+    delete world;
+    delete config;
+    delete solver;
+    delete broadphase;
+    delete dispatcher;
+  }
+
+  EXPORT(void stepSimulation(btDiscreteDynamicsWorld * world, float delta)) {
     world->stepSimulation(delta);
   }
 
@@ -482,6 +498,13 @@ extern "C" {
     }
     return body;
   }
+
+  EXPORT(void deleteRigidBody(btDiscreteDynamicsWorld * world, btRigidBody * body)) {
+    world->removeCollisionObject(body);
+    delete body->getCollisionShape();
+    delete body;
+  }
+
 }
 
 
